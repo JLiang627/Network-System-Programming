@@ -13,8 +13,6 @@
 #include "shell.h"
 
 
-
-
 /****************************************************************************/
 /* builtin function definitions                                             */
 /****************************************************************************/
@@ -22,6 +20,21 @@
 /* "echo" command.  Does not print final <CR> if "-n" encountered. */
 static void bi_echo(char **argv) {
   	/* Fill in code. */
+	_Bool newline = TRUE; //預設換行
+	int start = 1;
+
+	if (argv[1] && strcmp(argv[1], "-n")){
+		start = 2;
+		newline = FALSE;
+	}
+
+	while (!argv[start]){
+		printf("[%d]：%s", start, argv[start]);
+		start++;
+	}
+
+	if(newline)printf("\n");
+	
 }
 /* Fill in code. */
 

@@ -30,7 +30,8 @@ char ** parse(char *line) {
 	token = strtok(line, delim);  // 得到第一個token
 	if (token == NULL) return NULL;
 
-	
+	printf("[%d]：%s\n", count, token);
+
 
 	
   	/* Create array with room for first token.
@@ -55,9 +56,11 @@ char ** parse(char *line) {
 	 * 
   	 * Fill in code.
 	 */
+
 	while (token != NULL) {
 		token = strtok(NULL, delim); 
 		count++;
+		if (token)printf("[%d]：%s\n", count, token);
 		newArgv = realloc(newArgv, sizeof(char*) * (count+1));
 		newArgv[count] = token;
 	}
@@ -75,9 +78,8 @@ char ** parse(char *line) {
  * Argv array is assumed created with parse() above.
  */
 void free_argv(char **oldArgv) {
-
+	if (!oldArgv) return;
 	int i = 0;
-
 	/* Free each string hanging off the array.
 	 * Free the oldArgv array itself.
 	 *
