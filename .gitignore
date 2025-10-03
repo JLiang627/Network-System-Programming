@@ -1,0 +1,6 @@
+# Ignores any file that ends with :Zone.Identifier
+# This often helps with ADS artifacts on Windows
+*:Zone.Identifier
+
+# Ignores any file with that exact suffix anywhere in its name
+*Zone.Identifier
