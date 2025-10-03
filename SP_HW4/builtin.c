@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string.h>
 #include <unistd.h>
 #include "shell.h"
 
@@ -22,9 +23,11 @@ static void bi_echo(char **argv) {
   	/* Fill in code. */
 	_Bool newline = TRUE; //預設換行
 	int start = 1;
+	int givenNum;
 
 	if (argv[1] && strcmp(argv[1], "-n")){
-		start = 2;
+		givenNum = atoi(argv[2]);
+		start = 3;
 		newline = FALSE;
 	}
 
@@ -32,11 +35,25 @@ static void bi_echo(char **argv) {
 		printf("[%d]：%s", start, argv[start]);
 		start++;
 	}
-
-	if(newline)printf("\n");
 	
+	printf("%s\n", argv[givenNum+2]);
+	if(newline){
+		printf("%s\n", argv[givenNum+2]);
+	}
 }
 /* Fill in code. */
+static void bi_quit(char **argv) {
+
+}
+static void bi_exit(char **argv) {
+
+}
+static void bi_logout(char **argv) {
+
+}
+static void bi_bye(char **argv) {
+
+}
 
 
 
@@ -51,8 +68,11 @@ static struct cmd {
 } inbuilts[] = {
 
 	/* Fill in code. */
-
+	{ "quit", },
 	{ "echo", bi_echo },		/* When "echo" is typed, bi_echo() executes.  */
+	{ "exit", },
+	{ "logout", },
+	{ "bye", },
 	{ NULL, NULL }				/* NULL terminated. */
 };
 
