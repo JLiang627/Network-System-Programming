@@ -30,7 +30,6 @@ char ** parse(char *line) {
 	token = strtok(line, delim);  // 得到第一個token
 	if (token == NULL) return NULL;
 
-	printf("[%d]：%s\n", count, token);
 
 
 	
@@ -60,7 +59,6 @@ char ** parse(char *line) {
 	while (token != NULL) {
 		token = strtok(NULL, delim); 
 		count++;
-		if (token)printf("[%d]：%s\n", count, token);
 		newArgv = realloc(newArgv, sizeof(char*) * (count+1));
 		newArgv[count] = token;
 	}

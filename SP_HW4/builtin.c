@@ -43,19 +43,10 @@ static void bi_echo(char **argv) {
 }
 /* Fill in code. */
 static void bi_quit(char **argv) {
-
+    printf("[0]：%s\n", argv[0]);
+	printf("this is biquit\n");
+	exit(0);
 }
-static void bi_exit(char **argv) {
-
-}
-static void bi_logout(char **argv) {
-
-}
-static void bi_bye(char **argv) {
-
-}
-
-
 
 
 /****************************************************************************/
@@ -66,13 +57,12 @@ static struct cmd {
 	char * keyword;				/* When this field is argv[0] ... */
 	void (* do_it)(char **);	/* ... this function is executed. */
 } inbuilts[] = {
-
 	/* Fill in code. */
-	{ "quit", },
+	{ "quit", bi_quit},
 	{ "echo", bi_echo },		/* When "echo" is typed, bi_echo() executes.  */
-	{ "exit", },
-	{ "logout", },
-	{ "bye", },
+	{ "exit", bi_quit},
+	{ "logout", bi_quit},
+	{ "bye", bi_quit},
 	{ NULL, NULL }				/* NULL terminated. */
 };
 
@@ -102,4 +92,5 @@ int is_builtin(char *cmd) {
 /* Execute the function corresponding to the builtin cmd found by is_builtin. */
 int do_builtin(char **argv) {
   	this->do_it(argv);
+	return 0;
 }
