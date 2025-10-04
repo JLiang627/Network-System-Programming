@@ -67,6 +67,7 @@ char ** parse(char *line) {
 	 *
   	 * Fill in code.
 	 */
+	printf("ending of parsing\n");
   	return newArgv;
 }
 

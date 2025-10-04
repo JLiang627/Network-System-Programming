@@ -19,7 +19,7 @@ void run_command(char **myArgv) {
 
     /* Create a new child process. */
     pid = fork();
-
+    printf("this is forking place\n");
     switch (pid) {
 
         /* Error. */

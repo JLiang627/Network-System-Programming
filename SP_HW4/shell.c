@@ -16,11 +16,11 @@ int main() {
 
     fputs("myshell -> ", stdout);
     while (fgets(line, LONGLINE, stdin)) {
-
+        myArgv = parse(line);
         /* Create argv array based on commandline. */
-        if (myArgv == parse(line)) {
+        if (myArgv != NULL) {
 
-           
+            printf("im behind the if else function\n");
             if (is_builtin(myArgv[0])) { /* If command is recognized as a builtin, do it. */
                 do_builtin(myArgv);         
             } else {					/* Non-builtin command. */
