@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/wait.h> /* <-- 為了 waitpid 需要加入 */
+#include <sys/wait.h> /* <-- waitpid  */
 
 #include "shell.h"
 
@@ -27,34 +27,29 @@ void pipe_and_exec(char **myArgv) {
 			perror("pipe_present");
   			exit(errno);
 
-    	case 0:	/* No pipe found. Base case. */
+    	case 0:	/* No pipe found. */
       		execvp(myArgv[0], myArgv);
-			perror("execvp (base case)");
+			perror("execvp");
   			exit(errno);
 
     	default:	/* Pipe in the middle. */
 
-      		/* Split arg vector. */
 			left_argv = myArgv;
 			right_argv = &myArgv[pipe_argv_index + 1];
 			myArgv[pipe_argv_index] = NULL;
 
-      		/* Create a pipe. */
 			if (pipe(pipefds) < 0) {
 				perror("pipe");
 				exit(errno);
 			}
 
-      		/* Fork a new process. */
       		switch(pid = fork()) {
 
-        		case -1 : /* Fork error */
+        		case -1 :
 	  				perror("fork");
 	  				exit(errno);
 
-        		/* ---------------------------------------------------- */
-        		/* ** 子程序 (Child) ** : 執行 *左側* 命令 (cat mess) */
-        		/* ---------------------------------------------------- */
+        		/* (cat mess) */
         		case 0 :
 	  				/* Redirect output to the pipe's write end */
 					if (dup2(pipefds[1], STD_OUTPUT) < 0) {
@@ -64,17 +59,11 @@ void pipe_and_exec(char **myArgv) {
 	 				close(pipefds[0]); /* Don't need read end */
 					close(pipefds[1]); /* Don't need write end (after dup) */
 	 				
-					/* * 執行 *左側* 命令。
-					 * 注意：這裡 *不是* 遞迴呼叫，
-					 * 因為左側不需要再處理管道。
-					 */
 					execvp(left_argv[0], left_argv);
 					perror("execvp (left side)");
 	  				exit(errno);
 
-        		/* ---------------------------------------------------- */
-        		/* ** 父程序 (Parent) ** : 執行 *右側* 命令 (sort -u) */
-        		/* ---------------------------------------------------- */
+        		/* (sort -u) */
         		default :
 	  				/* Redirect input from the pipe's read end */
 					if (dup2(pipefds[0], STD_INPUT) < 0) {
@@ -85,14 +74,11 @@ void pipe_and_exec(char **myArgv) {
 					close(pipefds[1]); /* Don't need write end */
 
 					/* *
-					 * 等待 *左側* (子程序) 執行完畢。
-					 * 這樣 `cat mess` 會先結束。
+					 * 等待左側(子程序)執行完畢。
+					 * cat mess 會先結束。
 					 */
 					waitpid(pid, NULL, 0);
-					 
-					
           			pipe_and_exec(right_argv);
-
 					exit(errno); 
 			}
 	}

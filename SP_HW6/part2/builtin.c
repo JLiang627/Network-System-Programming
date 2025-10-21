@@ -55,7 +55,7 @@ static struct cmd {
 
 
 static void bi_builtin(char ** argv) {
-	/* Fill in code. [cite: 78, 90-95] */
+	/* Fill in code.*/
 	if (argv[1] == NULL) {
 		fprintf(stderr, "builtin: usage: builtin [command]\n");
 		return;
@@ -69,7 +69,7 @@ static void bi_builtin(char ** argv) {
 }
 
 static void bi_cd(char **argv) {
-	/* Fill in code. [cite: 83] */
+	/* Fill in code.*/
 	char *dir;
 	if (argv[1] == NULL) {
 		/* No directory specified, try HOME */

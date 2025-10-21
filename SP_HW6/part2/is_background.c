@@ -24,10 +24,6 @@ int is_background(char ** myArgv) {
 		i++;
 	}
 
-	/* i is now the index of the NULL terminator.
-	 * The last argument is at index i-1.
-	 * We know i > 0 because we checked for *myArgv == NULL.
-	 */
 	if (strcmp(myArgv[i-1], "&") == 0) {
 		/* Found "&" at the end */
 		myArgv[i-1] = NULL; /* Remove it from the argv array */

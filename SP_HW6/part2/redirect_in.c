@@ -23,31 +23,29 @@ int redirect_in(char ** myArgv) {
 	 * Fill in code. */
 	while (myArgv[i] != NULL) {
 		if (strcmp(myArgv[i], "<") == 0) {
-			break; /* Found "<" */
+			break; 
 		}
 		i++;
 	}
 
   	if (myArgv[i]) {	/* found "<" in vector. */
 
-    	//  * 1) Open file.
+    	// Open file.
 		fd = open(myArgv[i+1], O_RDONLY);
 		if (fd < 0) {
 			perror("open"); /* Report error */
 			return -1; /* errno is set by open() */
 		}
 
-     	//  * 2) Redirect stdin to use file for input.
+     	// Redirect stdin to use file for input.
 		if (dup2(fd, STD_INPUT) < 0) {
 			perror("dup2");
 			close(fd); /* Clean up file descriptor */
 			return -1; /* errno is set by dup2() */
 		}
    		
-		//  * 3) Cleanup / close unneeded file descriptors.
 		close(fd);
 
-   		//  * 4) Remove the "<" and the filename from myArgv.
 		myArgv[i] = NULL;
    		//  * Fill in code. 
   	}

@@ -29,24 +29,22 @@ int redirect_out(char ** myArgv) {
 
   	if (myArgv[i]) {	/* found ">" in vector. */
 
-    	// 1) Open file.
+    	// Open file.
     	fd = open(myArgv[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		if (fd < 0) {
-			perror("open"); /* Report error */
-			return -1; /* errno is set by open() */
+			perror("open");
+			return -1; 
 		}
     	
-		// * 2) Redirect to use it for output.
+		// Redirect to use it for output.
 		if (dup2(fd, STD_OUTPUT) < 0) {
 			perror("dup2");
-			close(fd); /* Clean up file descriptor */
-			return -1; /* errno is set by dup2() */
+			close(fd); 
+			return -1; 
 		}
 
-    	// * 3) Cleanup / close unneeded file descriptors.
 		close(fd);
 
-    	// * 4) Remove the ">" and the filename from myArgv.
 		myArgv[i] = NULL;
 
     	// * Fill in code. */
