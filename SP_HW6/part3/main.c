@@ -14,7 +14,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>   /* <-- 1. 加入 string.h */
+#include <string.h>
 #include "dict.h"
 
 int main(int argc, char **argv) {
@@ -35,11 +35,8 @@ int main(int argc, char **argv) {
 
 		tryit.word[strcspn(tryit.word, "\n")] = 0;
 
-		if (tryit.word[0] == '\0') {
-			continue;
-		}
-
-
+		if (tryit.word[0] == '\0') continue;
+		
 		switch(lookup(&tryit,argv[1]) ) {
 			case FOUND:
 				printf("%s : %s\n",tryit.word,tryit.text);

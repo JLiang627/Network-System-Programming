@@ -4,7 +4,7 @@
  *	         as resource.
  */
 #include <string.h>
-#include "dict.h" /* This includes stdio.h */
+#include "dict.h" 
 
 int lookup(Dictrec * sought, const char * resource) {
 	Dictrec dr;

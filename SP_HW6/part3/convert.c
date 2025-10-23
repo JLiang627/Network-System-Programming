@@ -18,11 +18,10 @@
 
 int main(int argc, char **argv) {
 	FILE *in;
-	FILE *out;        /* defaults */
+	FILE *out;        
 	char line[BIGLINE];
 	static Dictrec dr, blank;
 	
-	/* If args are supplied, argv[1] is for input, argv[2] for output */
 	if (argc==3) {
 		if ((in =fopen(argv[1],"r")) == NULL){DIE(argv[1]);}
 		if ((out =fopen(argv[2],"w")) == NULL){DIE(argv[2]);}	
@@ -32,14 +31,10 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	/* Main reading loop : read word first, then definition into dr */
-
-	/* Loop through the whole file. */
-	/* We read the word line first */
-	while (fgets(line, BIGLINE, in)) {
+	while (fgets(line, BIGLINE, in)) { //讀取單字
 		
 		/* Create and fill in a new blank record. */
-		dr = blank; /* Clear the record */
+		dr = blank;
 
 		/* Read word and put in record.  Truncate at the end of the "word" field.
 		 *
@@ -48,30 +43,27 @@ int main(int argc, char **argv) {
 		strncpy(dr.word, line, WORD - 1); /* Copy word, leave space for null */
 		dr.word[WORD - 1] = '\0'; /* Ensure null-termination */
 
-
 		/* Read definition, line by line, and put in record.
 		 *
 		 * Fill in code. */
 		char *text_ptr = dr.text;
 		size_t space_left = TEXT - 1; /* Space for null terminator */
 
-		while(fgets(line, BIGLINE, in)) {
+		while(fgets(line, BIGLINE, in)) { //讀取單字定義
 			if (strcmp(line, "\n") == 0) {
-				break; /* Blank line means end of definition */
+				break;
 			}
 
 			size_t line_len = strlen(line);
 			if (line_len >= space_left) {
-				/* Definition is too long, truncate */
 				strncpy(text_ptr, line, space_left);
 				text_ptr += space_left;
 				space_left = 0;
 
-				/* Consume the rest of the oversized definition */
-				while(fgets(line, BIGLINE, in) && strcmp(line, "\n") != 0) {
-					/* consuming... */
+				while(fgets(line, BIGLINE, in) && strcmp(line, "\n") != 0) { //處理過長的定義
+				
 				}
-				break; /* Move to next word */
+				break;
 			}
 			
 			/* Append line to text field */
