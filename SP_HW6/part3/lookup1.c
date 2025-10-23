@@ -17,7 +17,6 @@ int lookup(Dictrec * sought, const char * resource) {
 		 *
 		 * Fill in code. */
 		if ((in = fopen(resource, "r")) == NULL) {
-			/* Let main() handle the error reporting */
 			return UNAVAIL;
 		}
 	}
