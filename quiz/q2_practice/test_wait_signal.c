@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#define _GNU_SOURCE //意思是：「請啟用所有的 GNU 擴充功能。」
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
