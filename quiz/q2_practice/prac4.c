@@ -7,38 +7,6 @@
 // 5.  子行程 (Worker) 的實際工作內容是 `sleep(10)`，這代表它**「注定會逾時」**。
 // 6.  父行程 (Manager) 必須**安全地等待** `SIGCHLD` (子行程提早完成) 或 `SIGALRM` (子行程逾時) 這兩個事件的*其中之一*。
 
-// #### 具體要求 (必須全部滿足)
-
-// 1.  **Handler (父行程)**：
-//     * **`SIGINT` (Ctrl+C)**：安裝一個 `SIGINT` 處理函式，它只會印出訊息「`[Parent] Ignored Ctrl+C.`」。（父行程必須能抵抗 Ctrl+C）
-//     * **`SIGCHLD`**：安裝一個 `SIGCHLD` 處理函式。它**必須**使用 `waitpid(..., WNOHANG)` 迴圈來回收子行程，並設定一個 `volatile sig_atomic_t child_reaped_flag = 1;`
-//     * **`SIGALRM`**：安裝一個 `SIGALRM` 處理函式。此函式是「逾時處理器」，它必須**強制終止**子行程 (`kill(child_pid, SIGKILL)`)，並設定一個 `volatile sig_atomic_t timeout_flag = 1;`
-
-// 2.  **Handler (子行程)**：
-//     * **`SIGINT`**：子行程**必須**重設 (reset) `SIGINT` 的處理方式為 `SIG_DFL` (預設行為)，這樣 Ctrl+C 才會終止子行程。
-
-// 3.  **子行程邏G (Worker)**：
-//     * `fork` 之後，子行程第一件事是重設 `SIGINT` handler。
-//     * 接著印出自己的 PID 並 `raise(SIGSTOP)` 讓自己暫停。
-//     * 當它收到 `SIGCONT` 恢復執行後，它會印出「開始工作」，執行 `sleep(10)`，然後 `exit(0)`。
-
-// 4.  **父行程主邏輯 (Manager) - (本題核心)**：
-//     * **(A) 安裝**：安裝上述 3 個 handler。
-//     * **(B) 封鎖**：**在 `fork` 之前**，使用 `sigprocmask(SIG_BLOCK, ...)` 封鎖 `SIGCHLD` 和 `SIGALRM`。 (這是為了防止 `fork` 和 `sigsuspend` 之間的競態條件)。
-//     * **(C) Fork**：`fork()` 並儲存 `child_pid` (全域變數或傳入 handler)。
-//     * **(D) 啟動**：印出 PID，`sleep(3)`，然後 `kill(child_pid, SIGCONT)` 啟動子行程。
-//     * **(E) 計時**：`alarm(5)` 設定 5 秒逾時。
-//     * **(F) 安全等待 (最關鍵)**：
-//         * 建立一個 `suspend_mask`，它**允許** `SIGCHLD` 和 `SIGALRM`，但**封鎖** `SIGINT`。
-//         * 呼叫 `sigsuspend(&suspend_mask)` 讓父行程**原子性地解除封鎖並開始等待**。
-//     * **(G) 判斷結果**：
-//         * `sigsuspend` 返回後 (代表 `SIGCHLD` 或 `SIGALRM` 發生了)，**第一時間取消鬧鐘** `alarm(0)`。
-//         * **重新封鎖** `SIGCHLD` 和 `SIGALRM` (使用 `sigprocmask`) 以便安全地檢查 flag。
-//         * 檢查 `child_reaped_flag` 和 `timeout_flag`。
-//         * 如果 `timeout_flag` 為 1，印出「監控結果：子行程逾時，已終止。」
-//         * 如果 `child_reaped_flag` 為 1，印出「監控結果：子行程準時完成。」(在本題情境下不應發生)
-//     * **(H) 恢復**：最後，恢復 (unblock) `SIGCHLD` 和 `SIGALRM`。
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,9 +16,6 @@
 #include <errno.h>      // errno, ECHILD
 
 /* --- 1. 全域變數 --- */
-// 必須使用 volatile sig_atomic_t 確保在 handler 中
-// 對其的修改是原子的，且不會被編譯器最佳化掉。
-
 // 子行程 PID，必須是全域的，SIGALRM handler 才能存取到
 static pid_t child_pid = 0;
 
@@ -61,20 +26,11 @@ static volatile sig_atomic_t timeout_flag = 0;
 
 
 /* --- 2. 訊號處理函式 (父行程使用) --- */
-
-/**
- * @brief SIGINT (Ctrl+C) 處理函式 (父行程用)
- * 題目要求：僅印出訊息，父行程必須能抵抗 Ctrl+C
- */
 void handler_int_parent(int signo) {
     // write() 是 async-signal-safe，在 handler 中使用 printf() 不安全
     write(STDOUT_FILENO, "\n[Parent] Ignored Ctrl+C.\n", 28);
 }
 
-/**
- * @brief SIGCHLD 處理函式 (父行程用)
- * 題目要求：使用 WNOHANG 迴圈回收子行程，並設定旗標
- */
 void handler_chld(int signo) {
     int old_errno = errno; // 儲存 errno，避免 waitpid 汙染
     int status;
@@ -92,10 +48,6 @@ void handler_chld(int signo) {
     errno = old_errno;
 }
 
-/**
- * @brief SIGALRM (逾時) 處理函式 (父行程用)
- * 題目要求：強制終止子行程，並設定旗標
- */
 void handler_alrm(int signo) {
     int old_errno = errno;
     
@@ -110,17 +62,6 @@ void handler_alrm(int signo) {
     errno = old_errno;
 }
 
-
-/* --- 3. 子行程邏輯 --- */
-
-/**
- * @brief 子行程 (Worker) 的主函式
- * 題目要求：
- * 1. 重設 SIGINT handler
- * 2. raise(SIGSTOP) 讓自己暫停
- * 3. 收到 SIGCONT 後，執行 sleep(10) (注定逾時)
- * 4. 結束
- */
 void child_main() {
     // 2. Handler (子行程)：重設 SIGINT 為預設行為 (SIG_DFL)
     struct sigaction sa_child_int;
@@ -131,7 +72,6 @@ void child_main() {
 
     // 3. 子行程邏輯：印出 PID 並自我暫停
     printf("[Child] PID %d: Ready. Stopping (waiting for SIGCONT)...\n", getpid());
-    // fflush 確保 printf 的緩衝區在 raise 之前被清空
     fflush(stdout); 
     
     raise(SIGSTOP); // 程式會在這裡暫停
@@ -141,11 +81,7 @@ void child_main() {
     printf("[Child] PID %d: Resumed by SIGCONT. Working for 10 sec...\n", getpid());
     fflush(stdout);
 
-    // 5. 執行工作 (模擬)
-    // ------------------------------------
-    // 挑戰 (Bonus) 1: sleep(10); // 會逾時
-    // 挑戰 (Bonus) 2: sleep(2);  // 不會逾時
-    // ------------------------------------
+    // 執行工作 (模擬)
     sleep(10); // 這裡會被父行程的 SIGKILL (來自 SIGALRM) 中斷
 
     printf("[Child] PID %d: Work done. Exiting.\n", getpid());
@@ -160,8 +96,6 @@ int main() {
     sigset_t block_mask, old_mask;
 
     printf("[Parent] Manager started. PID %d.\n", getpid());
-
-    // --- (A) 安裝 Handlers ---
     
     // 1. SIGINT Handler
     sa_int.sa_handler = handler_int_parent;
@@ -224,20 +158,6 @@ int main() {
     // --- (E) 計時 ---
     printf("[Parent] Setting 5 sec timeout alarm.\n");
     alarm(5);
-
-    // --- (F) 安全等待 (本題核心) ---
-    // 我們必須在迴圈中呼叫 sigsuspend，
-    // 因為 SIGINT 也會中斷 sigsuspend，但我們不想因此停止。
-    //
-    // old_mask = 呼叫 (B) 之前的原始 mask (不封鎖 CHLD, ALRM, INT)
-    //
-    // sigsuspend(&old_mask) 的原子操作：
-    // 1. 將 mask 暫時設定為 old_mask (即「解除」對 CHLD/ALRM 的封鎖)
-    // 2. 睡眠，等待訊號
-    // 3. (當 CHLD/ALRM/INT 任一訊號抵達)
-    // 4. 執行對應的 handler (handler 會設定旗標)
-    // 5. sigsuspend 將 mask「恢復」為呼叫前的狀態 (即 `block_mask`)
-    // 6. sigsuspend 返回
     
     printf("[Parent] Waiting for SIGCHLD or SIGALRM... (Ctrl+C is ignored)\n");
     
@@ -245,14 +165,6 @@ int main() {
         // 原子性地解除封鎖 (CHLD/ALRM) 並等待
         sigsuspend(&old_mask); 
     }
-
-    // --- (G) 判斷結果 ---
-    // 程式執行到這裡，代表 `timeout_flag` 或 `child_reaped_flag` 至少
-    // 有一個為 1。
-    //
-    // 並且，因為 sigsuspend 已返回，目前的 process mask 已經
-    // "自動" 恢復為 `block_mask` (CHLD 和 ALRM 仍被封鎖)。
-    // 這為我們提供了檢查旗標的「臨界區段 (Critical Section)」。
     
     printf("[Parent] Woke up. Event occurred.\n");
     
@@ -262,10 +174,9 @@ int main() {
     // 檢查旗標 (此時 CHLD/ALRM 仍被封鎖，可安全檢查)
     if (timeout_flag) {
         printf("[Parent] Result: Child timed out. Killed.\n");
-        // 我們必須手動回收被 SIGKILL 終止的子行程
+        // 必須手動回收被 SIGKILL 終止的子行程
         // (因為 handler_alrm 發生時，子行程可能還沒死，
         // SIGCHLD 可能在 sigsuspend 迴圈外才到)
-        // 為了健壯性，在這裡再次檢查回收
         handler_chld(0); 
     } else if (child_reaped_flag) {
         printf("[Parent] Result: Child finished on time.\n");
