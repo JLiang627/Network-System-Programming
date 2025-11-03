@@ -8,7 +8,7 @@ CFLAGS = -Wall -Werror -g
 LDFLAGS = -pthread
 
 # 所有的 .c 原始碼檔案
-SRCS = mutex_increm.c mutex_stack.c mutex_trylock.c sema_binary.c sema_count.c sema_signal.c
+SRCS = mutex_increm.c mutex_stack.c mutex_trylock.c sema_binary.c sema_count.c sema_signal.c pro_con_thread.c
 
 # 根據 .c 檔案自動產生對應的執行檔名稱
 # (例如：mutex_increm.c -> mutex_increm)
