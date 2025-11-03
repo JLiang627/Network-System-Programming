@@ -10,7 +10,6 @@ sem_t sem_lock; // 宣告信號量
 
 void *increment_counter(void *arg) {
     for (int i = 0; i < INCREMENTS; i++) {
-        
         // 1. 取得信號量 (如果為 0 則等待)
         sem_wait(&sem_lock);
         

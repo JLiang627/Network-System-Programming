@@ -13,7 +13,6 @@ void *consumer_thread(void *arg) {
     
     // 1. 嘗試取得信號
     while (sem_trywait(&data_ready_signal) != 0) {
-        
         // 2. 檢查錯誤
         if (errno == EAGAIN) {
             // EAGAIN 代表信號量為 0 (資源不可用)
