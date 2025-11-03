@@ -1,8 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 
 #define STACK_SIZE 10
 
@@ -27,12 +25,11 @@ int try_push_data(int n) {
         return 1;
     } else {
         printf("Thread %ld: 堆疊正忙，稍後再試...\n", pthread_self());
-        // 可在這裡做其他工作
         return 0;
     }
 }
 
-/* 額外，只讀 Stack 顯示內容 (含鎖保護) */
+/* 只讀 Stack 顯示內容 (含鎖保護) */
 void print_stack() {
     pthread_mutex_lock(&stack_lock);
     printf("Stack 狀態：");
