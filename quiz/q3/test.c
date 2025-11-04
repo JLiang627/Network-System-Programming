@@ -5,6 +5,8 @@
 #include <unistd.h> // For usleep()
 #include <time.h>   // For srand()
 #include <string.h> // For strcmp()
+#include <time.h>       // time, srand, rand
+#include <sys/time.h>   // setitimer, struct itimerval
 
 // 共享緩衝區
 typedef struct {
@@ -23,35 +25,33 @@ void *consumer_func(void *arg) {
     int id = *(int*)arg;
     int sum = 0;
 
-    // 鎖定 Mutex 進入主迴圈
+    // 鎖定 Mutex 進入while
     pthread_mutex_lock(&buffer.lock);
 
     while (1) {
-        // 1. 等待 Producer 發出新數據的廣播
-        //當 Consumer 執行緒呼叫這個函式時，它會自動釋放 buffer.lock，
-        //然後作業系統會將這個執行緒的狀態變更為「睡眠 (Sleeping)」或「阻塞 (Blocked)」。
+        // 等待 Producer 釋放lock
         pthread_cond_wait(&buffer.cond_consumer, &buffer.lock);
 
-        // 2. 被喚醒，檢查是否為終止訊號
+        // 檢查是否為終止訊號
         if (buffer.data == '#') {
             break; // 跳出迴圈，準備終止
         }
 
-        // 3. 是數字，加到私有的 sum 中
+        // 是數字，加到私有的 sum 中
         int value = buffer.data - '0'; // 將 '1' 轉為 1
         sum += value;
 
-        // 4. 回報 Producer：本執行緒已完成本輪
+        // 回報 Producer：thread已完成本輪
         buffer.consumers_finished_round++;
 
-        // 5. 如果是「最後一個」完成的 Consumer，
-        //    則由它負責喚醒 Producer
+        // 如果是「最後一個」完成的 Consumer，
+        // 則由它負責喚醒 Producer
         if (buffer.consumers_finished_round == buffer.num_consumers) {
             pthread_cond_signal(&buffer.cond_producer);
         }
     }
 
-    // 6. 收到終止訊號，解鎖並印出總和
+    // 收到終止訊號，解鎖並印出總和
     pthread_mutex_unlock(&buffer.lock);
     printf("Consumer %d: %d\n", id, sum);
     
@@ -80,13 +80,15 @@ int is_valid_float(char *str) {
     return 1;
 }
 
-int main(int argc, char *argv[]) {  //同時擔任producer
-    // 1. 檢查並解析命令列參數
+int main(int argc, char *argv[]) {  // 同時擔任producer
+    
+    // 檢查輸入參數
     if (argc != 3) {
         fprintf(stderr, "Usage: %s num_consumer interval\n", argv[0]);
         return 1;
     }
 
+    // 檢查參數正確性
     if (!is_valid_int(argv[1]) || !is_valid_float(argv[2])) {
         fprintf(stderr, "Error: Invalid arguments.\n");
         fprintf(stderr, "Usage: %s num_consumer interval\n", argv[0]);
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]) {  //同時擔任producer
     int k_consumers = atoi(argv[1]);
     double t_interval = atof(argv[2]);
 
-    if (k_consumers <= 0 || k_consumers > 50) { // K=50
+    if (k_consumers <= 0 || k_consumers > 50) { // K最多可以接受到50個
         fprintf(stderr, "Error: num_consumer must be between 1 and 50.\n");
         return 1;
     }
@@ -105,17 +107,17 @@ int main(int argc, char *argv[]) {  //同時擔任producer
         return 1;
     }
     
-    // 將秒轉換為微秒 (useconds_t)
-    useconds_t sleep_usec = (useconds_t)(t_interval * 1000000);
+    // 將秒轉換為微秒
+    //useconds_t sleep_usec = (useconds_t)(t_interval * 1000000);
 
-    // 2. 初始化共享緩衝區、Mutex 和條件變數
+    // 初始化共享緩衝區、Mutex 和條件變數
     buffer.num_consumers = k_consumers;
     buffer.consumers_finished_round = 0;
     pthread_mutex_init(&buffer.lock, NULL);
     pthread_cond_init(&buffer.cond_producer, NULL);
     pthread_cond_init(&buffer.cond_consumer, NULL);
 
-    // 3. 建立 K 個 Consumer 執行緒
+    // 建立 K 個 Consumer 執行緒
     pthread_t *tids = malloc(k_consumers * sizeof(pthread_t));
     int *consumer_ids = malloc(k_consumers * sizeof(int));
 
@@ -127,60 +129,68 @@ int main(int argc, char *argv[]) {  //同時擔任producer
         }
     }
 
-    // 4. Main 執行緒扮演 Producer
+    // 老師提供的seed hint
     srand(time(NULL)); // 設置隨機數種子
-    printf("Producer starting... (K=%d, t=%.2fs)\n", k_consumers, t_interval);
+    // printf("Producer starting... (K=%d, t=%.2fs)\n", k_consumers, t_interval); // for測試
+    
+    struct itimerval timer;
+    long sec = (long)t_interval;
+    long usec = (long)((t_interval) * 1000000.0);
+    timer.it_value.tv_sec = sec;
+    timer.it_value.tv_usec = usec;
+
+
+    if (setitimer(ITIMER_REAL, &timer, NULL) == -1) {
+        perror("setitimer");
+        exit(1);
+    }
 
     // 讓我們產生 5 個隨機數
     for (int i = 0; i < 5; i++) {
         // 等待 t 秒
-        usleep(sleep_usec);
+        sleep(timer.it_value.tv_sec);
 
-        // --- 進入臨界區 ---
+        // --- 進入critical section ---
         pthread_mutex_lock(&buffer.lock);
 
-        // a. 產生 1-9 的隨機數
+        // 產生 1-9 的隨機數
         int random_num = (rand() % 9) + 1;
         buffer.data = (char)(random_num + '0'); // 轉為 '1'-'9'
-        printf("Producer generated: %c\n", buffer.data);
+        // printf("Producer generated: %c\n", buffer.data); //for 測試
 
-        // b. 重設計數器並廣播 (喚醒) 所有 Consumer
+        // 重設計數器並喚醒所有 Consumer
         buffer.consumers_finished_round = 0;
         pthread_cond_broadcast(&buffer.cond_consumer);
 
-        // c. 等待，直到所有 Consumer 都回報，lock在這裡才釋放
+        // 等待，直到 Consumer 都回報，lock在這裡才釋放
         while (buffer.consumers_finished_round < buffer.num_consumers) {
             pthread_cond_wait(&buffer.cond_producer, &buffer.lock);
         }
         
-        // --- 離開臨界區 ---
+        // --- 離開critical section ---
         pthread_mutex_unlock(&buffer.lock);
     }
-
-    // 5. 傳送終止訊號
-    usleep(sleep_usec); // 模擬最後一次延遲
     
     pthread_mutex_lock(&buffer.lock);
     buffer.data = '#'; // 
-    printf("Producer generated: %c (Termination)\n", buffer.data);
+    // printf("Producer generated: %c (Termination)\n", buffer.data); //for 測試
     
     // 廣播，喚醒所有 Consumer 讓它們終止
     pthread_cond_broadcast(&buffer.cond_consumer);
     pthread_mutex_unlock(&buffer.lock);
 
 
-    // 6. 等待 (Join) 所有 Consumer 執行緒結束
+    // 等待所有 Consumer thread結束
     for (int i = 0; i < k_consumers; i++) {
         pthread_join(tids[i], NULL);
     }
 
-    // 7. 清理資源
+    // 清理資源
     pthread_mutex_destroy(&buffer.lock);
     pthread_cond_destroy(&buffer.cond_producer);
     pthread_cond_destroy(&buffer.cond_consumer);
     free(tids);
     free(consumer_ids);
-
-    printf("All consumers finished. Producer exiting.\n");
+    // printf("All consumers finished. Producer exiting.\n"); for 測試
     return 0;
 }
