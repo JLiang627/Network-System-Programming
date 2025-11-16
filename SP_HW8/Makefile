@@ -2,17 +2,14 @@
 CC = gcc
 
 # 編譯旗標：
-# -Wall: 開啟所有警告
-# -g: 包含偵錯資訊
-# -I.: 將當前目錄 (.) 加入到頭文件搜索路徑，確保找到 tlpi_hdr.h, ename.c.inc 等
-CFLAGS = -Wall -g -I.
+CFLAGS = -Wall -g -I. -Wno-deprecated-declarations
 
 # 執行檔目標：
 # TARGET_SUSPEND: Exercise 22-3 (基準程式)
 TARGET_SUSPEND = sig_speed_sigsuspend
 # TARGET_WAITINFO: Exercise 22-3 (修改版程式)
 TARGET_WAITINFO = sig_speed_sigwaitinfo
-# TARGET_SV_IMPL: Exercise 22-4 (System V API 實作)
+# TARGET_SV_IMPL:
 TARGET_SV_IMPL = sv_signal_impl
 
 # 共同目標檔 (Common Object Files)
