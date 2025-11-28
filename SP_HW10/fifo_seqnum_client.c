@@ -14,17 +14,17 @@
 #include "fifo_seqnum.h"
 
 static char clientFifo[CLIENT_FIFO_NAME_LEN];
-static void             /* Invoked on exit to delete client FIFO */
-removeFifo(void)
-{
-    unlink(clientFifo);
-}
+// static void             /* Invoked on exit to delete client FIFO */
+// removeFifo(void)
+// {
+//     unlink(clientFifo);
+// }
 int
 main(int argc, char *argv[])
 {
-    int serverFd, clientFd;
+    int serverFd; //clientFd;
     struct request req;
-    struct response resp;
+    //struct response resp;
 
     if (argc > 1 && strcmp(argv[1], "--help") == 0)
         usageErr("%s [seq-len]\n", argv[0]);
@@ -38,8 +38,8 @@ main(int argc, char *argv[])
                 && errno != EEXIST)
         errExit("mkfifo %s", clientFifo);
 
-    if (atexit(removeFifo) != 0)
-        errExit("atexit");
+    // if (atexit(removeFifo) != 0)
+    //     errExit("atexit");
 
     /* Construct request message, open server FIFO, and send message */
 
@@ -54,16 +54,18 @@ main(int argc, char *argv[])
             sizeof(struct request))
         fatal("Can't write to server");
 
+    
+
     /* Open our FIFO, read and display response */
 
-    clientFd = open(clientFifo, O_RDONLY);
-    if (clientFd == -1)
-        errExit("open %s", clientFifo);
+    // clientFd = open(clientFifo, O_RDONLY);
+    // if (clientFd == -1)
+    //     errExit("open %s", clientFifo);
 
-    if (read(clientFd, &resp, sizeof(struct response))
-            != sizeof(struct response))
-        fatal("Can't read response from server");
+    // if (read(clientFd, &resp, sizeof(struct response))
+    //         != sizeof(struct response))
+    //     fatal("Can't read response from server");
 
-    printf("%d\n", resp.seqNum);
+    //printf("%d\n", resp.seqNum);
     exit(EXIT_SUCCESS);
 }

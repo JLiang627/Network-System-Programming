@@ -16,6 +16,7 @@
 
    The client is in fifo_seqnum_client.c.
 */
+#include <fcntl.h>
 #include <signal.h>
 #include "fifo_seqnum.h"
 int
@@ -58,10 +59,17 @@ main(int argc, char *argv[])
 
         snprintf(clientFifo, CLIENT_FIFO_NAME_LEN, CLIENT_FIFO_TEMPLATE,
                 (long) req.pid);
-        clientFd = open(clientFifo, O_WRONLY);
-        if (clientFd == -1) {           /* Open failed, give up on client */
-            errMsg("open %s", clientFifo);
-            continue;
+        clientFd = open(clientFifo, O_WRONLY | O_NONBLOCK);
+        if (clientFd == -1) {  
+            // 檢查是不是沒有讀取的人
+            if (errno == ENXIO) {
+                // client沒有打開讀取端，跳過此請求
+                fprintf(stderr, "Client FIFO %s not opened for reading - discarding request\n",
+                        clientFifo);
+            } else {
+                errMsg("open %s", clientFifo);
+            }
+            continue; // 跳過此請求，繼續處理下一個
         }
 
         /* Send response and close FIFO */
