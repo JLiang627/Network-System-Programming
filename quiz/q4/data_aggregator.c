@@ -1,3 +1,5 @@
+// 沒寫完也還沒更正，不能正常執行。
+
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
