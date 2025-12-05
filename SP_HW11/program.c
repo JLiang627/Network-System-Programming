@@ -125,12 +125,12 @@ int main(int argc, char *argv[]){
         if (errno == EEXIST){
             shmid = shmget(shm_key, sizeof(struct shm_layout), 0666);
             if (shmid != -1){
-                if (shmctl(shmid, IPC_RMID, NULL) == -10){
+                if (shmctl(shmid, IPC_RMID, NULL) == -1){
                     perror("Failed to remove old shared memory");
                     exit(1);
                 }
             }
-            printf("Removed stale shared memory");
+            printf("Removed stale shared memory\n");
             shmid = shmget(shm_key, sizeof(struct shm_layout), IPC_CREAT | IPC_EXCL | 0666);
         }
     
