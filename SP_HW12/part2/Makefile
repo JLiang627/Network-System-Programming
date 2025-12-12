@@ -1,11 +1,6 @@
-#
-# 2025 Network System Programming Homework 12 - Part 1 Makefile
-#
-
 # 編譯器與旗標設定
 CC = gcc
 CFLAGS = -Wall -std=c99 -g
-LDFLAGS = 
 
 # 執行檔名稱
 CLIENT = isock_client
@@ -43,8 +38,6 @@ $(SERVER): $(SERVER_OBJS)
 isock_server.o: isock_server.c dict.h
 	$(CC) $(CFLAGS) -c $<
 
-# --------------------------------------------------------------------------
 # 額外目標：單獨編譯
-# --------------------------------------------------------------------------
 usock_client: $(CLIENT)
 usock_server: $(SERVER)

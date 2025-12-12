@@ -13,12 +13,10 @@
  */
 
 #include <errno.h>
-
+#include <string.h>
 #include "dict.h"
 
 int main(int argc, char **argv) {
-	FILE *in;
-	char word[WORD];
 	Dictrec tryit;
 
 	if (argc != 2) {
@@ -26,7 +24,7 @@ int main(int argc, char **argv) {
 		exit(errno);
 	}
 
-	while(fputs("What word do you want : ",stderr),fgets(tryit.word)) {
+	while(fputs("What word do you want : ",stderr),fgets(tryit.word, WORD, stdin)) {
 		char *nl = strchr(tryit.word, '\n');
 		if (nl) *nl = '\0';
 		switch(lookup(&tryit,argv[1]) ) {

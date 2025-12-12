@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv) {
 	static struct sockaddr_in server,client;
-	int sockfd,siz;
+	int sockfd;
 	Dictrec dr, *tryit = &dr;
 
 	if (argc != 2) {
@@ -59,8 +59,7 @@ int main(int argc, char **argv) {
 				break;
 			case NOTFOUND : 
 				if (sendto(sockfd, tryit, sizeof(Dictrec), 0, (struct sockaddr *)&client, client_len) < 0)
-				DIE("sendto");/* Send response.
-					* Fill in code. */
+				DIE("sendto");
 				break;
 			case UNAVAIL:
 				DIE(argv[1]);
