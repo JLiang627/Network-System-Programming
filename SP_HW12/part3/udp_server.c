@@ -22,36 +22,48 @@ int main(int argc, char **argv) {
 		exit(errno);
 	}
 
-	/* Create a UDP socket.
-	 * Fill in code. */
-
 	/* Initialize address.
 	 * Fill in code. */
+	memset(&server, '\0', sizeof(server));
+	
+	/* Create a UDP socket.
+	 * Fill in code. */
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
+	server.sin_port = htons(PORT);
 
 	/* Name and activate the socket.
 	 * Fill in code. */
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd == -1)DIE("socket");
+
+	if (bind(sockfd, (struct sockaddr *) &server, sizeof(server)) == -1)DIE("bind");
 
 	for (;;) { /* await client packet; respond immediately */
+		socklen_t client_len = sizeof(client);
 
-		siz = sizeof(client); /* siz must be non-zero */
+		ssize_t n = recvfrom(sockfd, tryit, sizeof(Dictrec), 0, (struct sockaddr *)&client, &client_len);
 
 		/* Wait for a request.
 		 * Fill in code. */
+		if (n < 0){
+			if (errno == EINTR) continue;
+			DIE("recvfrom");
+		}
 
-		while (___) {
 			/* Lookup request and respond to user. */
-			switch(lookup(tryit,argv[1]) ) {
-				case FOUND: 
-					/* Send response.
-					 * Fill in code. */
-					break;
-				case NOTFOUND : 
-					/* Send response.
-					 * Fill in code. */
-					break;
-				case UNAVAIL:
-					DIE(argv[1]);
-			} /* end lookup switch */
-		} /* end while */
+		switch(lookup(tryit,argv[1]) ) {
+			case FOUND:
+				if (sendto(sockfd, tryit, sizeof(Dictrec), 0, (struct sockaddr *)&client, client_len) < 0)
+				DIE("sendto"); 
+				break;
+			case NOTFOUND : 
+				if (sendto(sockfd, tryit, sizeof(Dictrec), 0, (struct sockaddr *)&client, client_len) < 0)
+				DIE("sendto");/* Send response.
+					* Fill in code. */
+				break;
+			case UNAVAIL:
+				DIE(argv[1]);
+		} /* end lookup switch */
 	} /* end forever loop */
 } /* end main */

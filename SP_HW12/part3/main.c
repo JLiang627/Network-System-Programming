@@ -26,7 +26,9 @@ int main(int argc, char **argv) {
 		exit(errno);
 	}
 
-	while(fputs("What word do you want : ",stderr),gets(tryit.word)) {
+	while(fputs("What word do you want : ",stderr),fgets(tryit.word)) {
+		char *nl = strchr(tryit.word, '\n');
+		if (nl) *nl = '\0';
 		switch(lookup(&tryit,argv[1]) ) {
 			case FOUND:
 				printf("%s : %s",tryit.word,tryit.text);
