@@ -6,12 +6,10 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-// --- 你的 mypopen / mypclose 實作 ---
 
 static pid_t *pid_record;
 static int max_fds;
 
-// 實作mypopen (你提供的版本)
 FILE *mypopen(const char *command, const char *type) {
 	// 參數宣告區
 	int fd[2];
@@ -36,7 +34,7 @@ FILE *mypopen(const char *command, const char *type) {
 
     // --- 步驟 3：建立水管 ---
     if (pipe(fd) == -1){
-    	perror("pipe failed"); // (我把它改成了 perror)
+    	perror("pipe failed"); 
     	return NULL;
     }
 
@@ -47,7 +45,7 @@ FILE *mypopen(const char *command, const char *type) {
     child_pid = fork();
     switch (child_pid){
     case -1:
-    	perror("fork failed"); // (我把它改成了 perror)
+    	perror("fork failed"); 
     	close(fd[0]);
     	close(fd[1]);
     	return NULL;
@@ -108,7 +106,6 @@ FILE *mypopen(const char *command, const char *type) {
     return NULL; 
 }
 
-// 實作mypclose (我們完成的最終版本)
 int mypclose(FILE *stream) {
     int fd;
     pid_t child_pid;
@@ -125,7 +122,6 @@ int mypclose(FILE *stream) {
 
     // 步驟 2：關閉串流 (這會 flush 並 close fd)
     if (fclose(stream) == EOF) {
-        // 即使 fclose 失敗，我們還是必須嘗試 waitpid
     }
 
     // 步驟 3：等待子行程 (處理 EINTR)
