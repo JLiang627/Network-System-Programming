@@ -79,15 +79,7 @@ int main(int argc, char *argv[]) {
 
     // --- 初始化變數 ---
     shmp->top = STACK_SIZE - 1; // 堆疊初始為空
-
-    // --- 初始化三個信號量 ---
-    // 1. mutex: 互斥鎖，初始為 1 (代表未上鎖)
-    //    注意：這裡我們設為 0，是為了配合下方「父行程控制開始」的邏輯 (Starting Gun)
-    //    如果不需要父行程控制，標準 Producer-Consumer 這裡應該設為 1。
-    //    為了保留原題目「父行程最後才放行」的風格，我們設為 0，
-    //    但因為有三個鎖，邏輯稍微複雜。
-    //    為了簡化並符合標準 P-C 模型，我們這裡將 mutex 設為 1 (自由)，
-    //    利用 sleep 來控制流程演示。
+    
     if (sem_init(&shmp->mutex, 1, 1) == -1) errorHandler("sem_init mutex");
 
     // 2. sem_empty: 空位數量，初始為 STACK_SIZE (3)

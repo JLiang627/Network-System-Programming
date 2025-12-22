@@ -77,13 +77,6 @@ int main(int argc, char *argv[]) {
     if (shmp == MAP_FAILED)
         errorHandler("mmap");
 
-    // 3. 初始化堆疊索引與信號量
-    // 堆疊向下成長，初始 top 指向最後一個元素的索引 (表示空，因為 push 會填入 top 並減 1)
-    // 修正：原始邏輯是 top 指向 "當前可用空間" 還是 "已存資料"？
-    // 原始程式：stack[top] = ch; top--;  => top 指向的是「下一個寫入位置」
-    // 原始程式：pop 讀取 stack[top+1]    => top+1 是「最後一個存入的資料」
-    // 因此，初始狀態 top 應為 STACK_SIZE - 1 (指向最後一格) 是可以運作的，
-    // 第一筆資料會存在 index 2，top 變 1。
     shmp->top = STACK_SIZE - 1; 
 
     // 初始化 Semaphore，設為 0 代表一開始鎖住，由 Parent 開啟
