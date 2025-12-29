@@ -4,7 +4,7 @@ This repository contains all homework assignments and projects for the **Network
 
 > **中文版說明請見**: [README_zh-TW.md](./README_zh-TW.md)
 
-## 📚 Course Information
+##  Course Information
 
 - **Course Name**: Network System Programming
 - **Course Code**: CSE578
@@ -15,7 +15,7 @@ This repository contains all homework assignments and projects for the **Network
 - **Credits**: 3
 - **Course Type**: Elective
 
-## 📂 Repository Structure
+##  Repository Structure
 
 ```
 System-Programming-HW/
@@ -35,7 +35,7 @@ System-Programming-HW/
 ├── Handouts/        # Course handouts
 ```
 
-## 📝 Assignments Overview
+##  Assignments Overview
 
 Each homework folder contains:
 - Implementation source code (`.c` files)
@@ -44,7 +44,7 @@ Each homework folder contains:
 
 **Total**: 12 homework assignments + 5 quizzes + 1 final exam
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 - **Primary Language**: C
 - **Development Environment**: Linux/Unix
@@ -56,18 +56,18 @@ Each homework folder contains:
   - Inter-Process Communication (IPC)
   - And more...
 
-## 📖 Additional Resources
+##  Additional Resources
 
 - **Handouts/**: Contains course materials and reference documents
 - **quiz/**: Contains quiz-related materials
 
-## 📧 Contact
+##  Contact
 
 - **Author**: JLiang627
 - **Email**: a0979652527@icloud.com
 - **GitHub**: [@JLiang627](https://github.com/JLiang627)
 
-## 📄 License
+##  License
 
 This repository is for educational purposes only. Please respect academic integrity policies.
 
